@@ -6,8 +6,6 @@ function parseCodeToSeq(textcode){
   
   var seq = ""
   var addition_locs = ""
-  // user defined variables or identifiers are given a type of ID
-  // solidity's original specifiers(e.g. contract, modifier, is, etc.) are given a type of **Specifier
   parser.visit(ast, 
   {
 
@@ -33,15 +31,43 @@ function parseCodeToSeq(textcode){
     // FunctionTypeName:function(node){
     //     console.log(node)
     // },
+
+    // Needn't care returns variables for those only consist type
     FunctionDefinition:function(node) {
-        
         seq += "FunctionBegin "
         seq += "FunctionName#" + node['name'] + " "
-        if(node['visibility'] != null){
+        // 'public' | 'private' | 'external' | 'internal'
+        if(node['visibility']){
             seq += "Visibility#" + node['visibility'] + " "
         }
-        if(node['stateMutability'] != null){
+        // 'pure' | 'constant' | 'view' | 'payable'
+        if(node['stateMutability']){
             seq += "StateMutability#" + node['stateMutability'] + " "
+        }
+        if(node['returnParameters']){
+            seq += "ReturnParametersBegin "
+            for(i = 0; i < Object.keys(node['returnParameters']).length; i++){
+                seq += "VariableDeclarationBegin "
+                if(node['returnParameters'][i]['storageLocation']){
+                    seq += "StorageLocation#"+node['returnParameters'][i]['storageLocation']+" "
+                }
+                if(node['returnParameters'][i]['name']){
+                    seq += "VariableName#"+node['returnParameters'][i]['name']+" "
+                }
+                node['returnParameters'][i]['visited'] = true
+                if(node['returnParameters'][i]['typeName']['type'] == "ElementaryTypeName"){
+                    seq += "ElementaryTypeName#"+node['returnParameters'][i]['typeName']['name']+" "
+                    node['returnParameters'][i]['typeName']['visited'] = true
+                }
+                else if(node['returnParameters'][i]['typeName']['type'] == "UserDefinedTypeName"){
+                    seq += "ElementaryTypeName#"+node['returnParameters'][i]['typeName']['namePath']+" "
+                    node['returnParameters'][i]['typeName']['visited'] = true
+                }
+                
+                seq += "VariableDeclarationEnd "
+            }
+            seq += "ReturnParametersEnd "
+
         }
     },
     "FunctionDefinition:exit":function(node){
@@ -52,23 +78,31 @@ function parseCodeToSeq(textcode){
             seq += "ElementaryTypeName#"+node['name']+" "
         }
     },
+    UserDefinedTypeName:function(node){
+        console.log(node)
+        if(!node["visited"]){
+            seq += "ElementaryTypeName#"+node['namePath']+" "
+        }
+    },
     VariableDeclaration:function(node){
-        seq += "VariableDeclarationBegin "
-        if(node['isDeclaredConst']){
-            seq += "IsConstant#true "
-        }
-        if(node['visibility']){
-            seq += "Visibility#"+node['visibility']+" "
-        }
-        if(node["isIndexed"]){
-            seq += "IsIndex#true "
-        }
-        if(node['name']){
-            seq += "VariableName#"+node['name']+" "
+        if(!node['visited']){
+            seq += "VariableDeclarationBegin "
+            // only state variables have constant
+            // only state variables have visibility
+            // indexed only exits in events.
+            // 'memory' | 'storage' | 'calldata'
+            if(node['storageLocation']){
+                seq += "StorageLocation#"+node['storageLocation']+" "
+            }
+            if(node['name']){
+                seq += "VariableName#"+node['name']+" "
+            }
         }
     },
     "VariableDeclaration:exit":function(node){
-        seq += "VariableDeclarationEnd "
+        if(!node['visited']){
+            seq += "VariableDeclarationEnd "
+        }
     },
     Mapping:function(node){
         seq += "MappingBegin "
@@ -76,9 +110,8 @@ function parseCodeToSeq(textcode){
     "Mapping:exit":function(node){
         seq += "MappingEnd "
       },
-    //   need further test
+    //   may never seen
     EnumValue:function(node) {
-        // console.log(node)
         seq += "VariableName#"+node['name']+" "
         node['visited'] = true
     },
@@ -112,20 +145,6 @@ function parseCodeToSeq(textcode){
     "ForStatement:exit":function(node){
         seq += "ForStatementEnd "
     },
-//     InlineAssemblyStatement:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(InlineAssemblyStatement "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "InlineAssemblyStatement:exit":function(node){
-//       if(node["ifVisited"] != true){
-//         struct_seq += "InlineAssemblyStatement) "
-//         line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
     DoWhileStatement:function(node) {
         seq += "DoWhileStatementBegin "
     },
@@ -137,6 +156,9 @@ function parseCodeToSeq(textcode){
     },
     BreakStatement:function(node) {
         seq += "BreakStatement#break "
+    },
+    ThrowStatement:function(node) {
+        seq += "ThrowStatement#Throw "
     },
     ReturnStatement:function(node){
         seq += "ReturnStatementBegin "
@@ -150,14 +172,21 @@ function parseCodeToSeq(textcode){
     "EmitStatement:exit":function(node){
         seq += "EmitStatementEnd "
     },
+    // placementholder "_" will also be treated as a variable in modifier
     Identifier:function(node){
         if(!node['visited']){
             seq += "VariableName#"+node['name']+" "
         }
     },
+    // haven't seen
+    IdentifierList:function(node){
+        seq += "IdentifierListBegin "
+    },
+    "IdentifierList:exit":function(node){
+        seq += "IdentifierListEnd "
+    },
     // Notice: functioName may be classified into Identifier/ElementaryTypeName domain in FunctionCall.
     FunctionCall:function(node){
-        console.log(node)
         seq += "FunctionInvocBegin "
         // function directly called
         if(node['expression']['type'] == "Identifier"){
@@ -173,20 +202,27 @@ function parseCodeToSeq(textcode){
             seq += "FunctionName#"+ node['expression']['typeName']['name']+" "
             node['expression']['typeName']['visited'] = true
         }
-        
+        // arguments name, if has. If do not have, is [] instead of null!
+        if(Object.keys(node['names']).length != 0){
+            for(i = 0; i< Object.keys(node['names']).length; i++){
+                seq += "ArgumentName#"+node['names'][i] +" "
+            }
+        }
     },
     "FunctionCall:exit":function(node){
         seq += "FunctionInvocEnd "
 
     },
-    // need further tested
-    ThrowStatement:function(node) {
-        seq += "ThrowStatementBegin "
-    },
-    "ThrowStatement:exit":function(node){
-        seq += "ThrowStatementEnd "
-    },
-    // For assign
+    // ElementaryTypeNameExpression:function(node){
+    //     seq += "ElementaryTypeNameExpressionBegin "
+
+    // },
+    // "ElementaryTypeNameExpression:exit":function(node){
+    //     seq += "ElementaryTypeNameExpressionEnd "
+    // },
+
+
+    // For assign value or self-statemented
     VariableDeclarationStatement:function(node){
         seq += "VariableDeclarationStatementBegin "
         if(node['initialValue']){
@@ -196,192 +232,27 @@ function parseCodeToSeq(textcode){
     "VariableDeclarationStatement:exit":function(node){
         seq += "VariableDeclarationStatementEnd "
     },
-//     AssemblyCall:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyCall FunctionName-"+node['functionName']+" "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each+line_each
-//       if(Object.keys(node['arguments']).length != 0){
-//           struct_seq +="(Arguments "
-//           line_each = node['loc']['start']['line']+" "
-//           struct_loc += line_each
-//       }
-//     }
-//     },
-//     "AssemblyCall:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       if(Object.keys(node['arguments']).length != 0){
-//           struct_seq +="Arguments) "
-//           line_each = node['loc']['end']['line']+" "
-//           struct_loc += line_each
-//       }
-//         struct_seq += "AssemblyCall) "
-//         line_each = node['loc']['end']['line']+" "
-//         struct_loc += line_each
-//     }
-//     },
-//     AssemblyLocalDefinition:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyLocalDef "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblyLocalDefinition:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyLocalDef) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyAssignment:function(node) {
-//       // console.log("assemblyassign",node)
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyAssignment "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblyAssignment:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyAssignment) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyStackAssignment:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyStackAssignment VariableName-"+node['name']+" AssemblyStackAssignment) "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each +line_each+line_each
-//       }
-//     },
-    // need further test
-    LabelDefinition:function(node) {
-      if(node["ifVisited"] != true){
-      struct_seq += "(LabelDef LabelName#"+ node['name']+" LabelDef) "
-      line_each = node['loc']['start']['line']+" "
-      struct_loc += line_each+line_each+line_each
-      }
-    },
-//     AssemblySwitch:function(node) {
-//       if(node["ifVisited"] != true){
-//       // console.log(node)
-//       struct_seq += "(AssemblySwitch "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblySwitch:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblySwitch) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyCase:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyCase "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblyCase:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       if(node['default']){
-//           struct_seq += "defaultCase-true "
-//           line_each = node['loc']['end']['line']+" "
-//           struct_loc += line_each
-//       }
-//       struct_seq += "AssemblyCase) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//     }
-//     },
-//     AssemblyFunctionDefinition:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyFunctionDef FunctionName-"+node['name']+" "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each+line_each
-//       }
-//     },
-//     "AssemblyFunctionDefinition:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyFunctionDef) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyFunctionReturns:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyFunctionReturns "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblyFunctionReturns:exit":function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyFunctionReturns) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyFor:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyFor "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblyFor:exit":function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyFor) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyIf:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "(AssemblyIf "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     "AssemblyIf:exit":function(node){
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyIf) "
-//       line_each = node['loc']['end']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-//     AssemblyLiteral:function(node) {
-//       if(node["ifVisited"] != true){
-//       struct_seq += "AssemblyLiteral-"+node['name']+" "
-//       line_each = node['loc']['start']['line']+" "
-//       struct_loc += line_each
-//       }
-//     },
-// need further test
     TupleExpression:function(node) {
         seq += "TupleExpressionBegin "
     },
     "TupleExpression:exit":function(node){
         seq += "TupleExpressionEnd "
     },
-    // need test for hex or decimal.
+    // only appear in assembly
     NumberLiteral:function(node) {
         seq += "NumberLiteral#Number "
     },
+    // only appear in assembly
     BooleanLiteral:function(node) {
-      //   console.log(node)
         seq += "BooleanLiteral#boolean "
     },
-    // need further test
+    StringLiteral:function(node){
+        seq += "StringLiteral#String "
+    },
     UnaryOperation:function(node){
         seq += "UnaryOperation#"+node['operator']+" "
     },
     BinaryOperation:function(node) {
-        // console.log(node)
         seq += "BinaryOperation#"+node['operator']+" "
     },
     Conditional:function(node) {
@@ -405,39 +276,166 @@ function parseCodeToSeq(textcode){
         seq += "MemberAccessEnd "
     },
     HexNumber:function(node) {
-        seq += "Number#HexNumber "
+        seq += "NumberLiteral#Number "
     },
     DecimalNumber:function(node) {
-        console.log(node)
-        seq += "Number#DecimalNumber "
+        seq += "NumberLiteral#Number "
     },
-
+    InlineAssemblyStatement:function(node) {
+        seq += "InlineAssemblyStatementBegin "
+    },
+    "InlineAssemblyStatement:exit":function(node){
+        seq += "InlineAssemblyStatementEnd "
+    },
+    AssemblyFunctionDefinition:function(node) {
+        seq += "AssemblyFunctionBegin FunctionName#"+node['name']+" "
+        if(Object.keys(node['returnArguments']).length != 0){
+            seq += "ReturnParametersBegin "
+            for(i = 0; i < Object.keys(node['returnArguments']).length; i++){
+                seq += "VariableName#"+node['returnArguments'][i]['name']+" "
+                node['returnArguments'][i]['visited'] = true
+            }
+            seq += "ReturnParametersEnd "
+        }
+    },
+    "AssemblyFunctionDefinition:exit":function(node){
+        seq += "AssemblyFunctionEnd "
+    },
+    AssemblyBlock:function(node){
+        seq += "AssemblyBlockBegin "
+    },
+    "AssemblyBlock:exit":function(node){
+        seq += "AssemblyBlockEnd "
+    },
+    AssemblyCall:function(node) {
+        if(Object.keys(node['arguments']).length != 0){
+            seq += "AssemblyFunctionInvocBegin FunctionName#"+node['functionName']+" " 
+        }
+        else{
+            seq += "VariableName#"+node['functionName']+" "
+        }   
+    },
+    "AssemblyCall:exit":function(node){
+        if(Object.keys(node['arguments']).length != 0){
+            seq += "AssemblyFunctionInvocEnd "
+        }
+    },
+    AssemblyLocalDefinition:function(node) {
+        seq += "AssemblyLocalBegin "
+    },
+    "AssemblyLocalDefinition:exit":function(node){
+        seq += "AssemblyLocalEnd "
+    },
+    AssemblyAssignment:function(node) {
+        seq += "AssemblyAssignmentBegin "
+    },
+    "AssemblyAssignment:exit":function(node){
+        seq += "AssemblyAssignmentEnd "
+    },
+    AssemblyStackAssignment:function(node) {
+        seq += "AssemblyAssignmentBegin UnaryOperation#=: VariableName#"+node['name']+" AssemblyAssignmentEnd "
+    },
+    LabelDefinition:function(node) {
+        seq += "LabelName#"+ node['name']+" "
+      },
+    AssemblySwitch:function(node) {
+        // console.log(node)
+        seq += "AssemblySwitchBegin "
+    },
+    "AssemblySwitch:exit":function(node){
+        seq += "AssemblySwitchEnd "
+    },
+    AssemblyCase:function(node) {
+        seq += "AssemblyCaseBegin "
+    },
+    "AssemblyCase:exit":function(node){
+        seq += "AssemblyCaseEnd "
+    },
+    AssemblyFunctionReturns:function(node) {
+        seq += "AssemblyFunctionReturnsBegin "
+    },
+    "AssemblyFunctionReturns:exit":function(node) {
+        seq += "AssemblyFunctionReturnsEnd "
+    },
+    AssemblyFor:function(node) {
+        seq += "AssemblyForBegin "
+    },
+    "AssemblyFor:exit":function(node) {
+        seq += "AssemblyForEnd "
+    },
+    AssemblyIf:function(node) {
+        seq += "AssemblyIfBegin "
+    },
+    "AssemblyIf:exit":function(node){
+        seq += "AssemblyIfEnd "
+    },
+    // haven't seen 
+    AssemblyLiteral:function(node) {
+        console.log(node)
+        seq += "AssemblyLiteral#"+node['name']+" "
+    },
   }
   )
 
   returnValue = {"seq":seq,"addition_loc":addition_locs}
   return returnValue 
 }
+
+assemblyfunc = `contract c1 {
+    function at(address _addr) {
+        assembly  {
+            function power(base, exponent) -> result {
+                switch exponent
+                case 0 { result := 1 }
+                case 1 { result := base }
+                default {
+                    result := power(mul(base, base), div(exponent, 2))
+                    switch mod(exponent, 2)
+                        case 1 { result := mul(base, result) }
+                }
+            }
+            let x := 0
+            for { let i := 0 } lt(i, 0x100) { i := add(i, 0x20) } {
+                    x := add(x, mload(i))
+            }
+            // retrieve the size of the code, this needs assembly
+            let size := extcodesize(_addr)
+            =: abcde
+            ab :
+            if slt(x, 0) { x := sub(0, x) }             
+        }
+    }
+}`
 modifiercode = `
 contract c7172{
     /**
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
+      uint _;
       require(msg.sender == owner);
       _;
     }
   }`
-functioncode1 = `contract c7053{ 
-    function Ownable(uint a) public {
-        owner = msg.sender;
-        stateVar = new uint[](2);
-        stateVar[0] = 1;
-        a>1 ? a=2 : a=1;
+functioncode1 = `contract c7053{
+    function Ownable(uint a) public returns (FreshJuiceSize memory size, uint a) {
+        // landsPurchased();
+        // uint x;
+        // Person memory person = Person({age:18,stuID:101,name:"liyuechun"});
+        require(newOwner != address(this),'Something bad happened');
+        // mapping (address => uint32) lands;
+        // abc x;
+        // string data = "test";
+        // owner = msg.sender;
+        // stateVar = new uint[](2);
+        // stateVar[0] = 1;
+        // a>1 ? a=2 : a=1;
+        // return (7, true, 2);
     }
 }`
+
 functioncode = `contract c7053{
-    function transferOwnership(address newOwner) internal onlyOwner(5) {
+    function transferOwnership(address newOwner) internal view onlyOwner(5) {
         uint[] stateVar;
         uint b = 0x123456789ffaa;
         b = 6;
