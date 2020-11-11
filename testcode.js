@@ -52,6 +52,7 @@ contract c7172{
   }`
 exports.functioncode1 = `contract c7053{
     function Ownable(uint a) public returns (FreshJuiceSize memory size, uint a) {
+        function (bool wasTransactions) external callback = validIds[queryId]
         landsPurchased();
         uint x;
         // Person memory person = Person({age:18,stuID:101,name:"liyuechun"});
