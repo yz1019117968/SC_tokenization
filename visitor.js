@@ -1,14 +1,13 @@
 const parser = require('solidity-parser-antlr') 
 
-// exports.parseCodeToSeq =
-function parseCodeToSeq(textcode){
+/*
+    Parse smart contracts code to sequence, modified from SBT traversal.
+*/
+exports.parseCodeToSeq = function parseCodeToSeq(textcode){
   var ast = parser.parse(textcode, { loc: true })
-  
   var seq = ""
-  var addition_locs = ""
   parser.visit(ast, 
   {
-
     ModifierDefinition:function(node) {
         seq += "ModifierBegin ModifierName#"+node['name']+" "
     },
@@ -79,7 +78,6 @@ function parseCodeToSeq(textcode){
         }
     },
     UserDefinedTypeName:function(node){
-        console.log(node)
         if(!node["visited"]){
             seq += "ElementaryTypeName#"+node['namePath']+" "
         }
@@ -112,6 +110,7 @@ function parseCodeToSeq(textcode){
       },
     //   may never seen
     EnumValue:function(node) {
+        console.log(node)
         seq += "VariableName#"+node['name']+" "
         node['visited'] = true
     },
@@ -180,6 +179,7 @@ function parseCodeToSeq(textcode){
     },
     // haven't seen
     IdentifierList:function(node){
+        console.log(node)
         seq += "IdentifierListBegin "
     },
     "IdentifierList:exit":function(node){
@@ -211,7 +211,6 @@ function parseCodeToSeq(textcode){
     },
     "FunctionCall:exit":function(node){
         seq += "FunctionInvocEnd "
-
     },
     // ElementaryTypeNameExpression:function(node){
     //     seq += "ElementaryTypeNameExpressionBegin "
@@ -268,8 +267,7 @@ function parseCodeToSeq(textcode){
         seq += "IndexAccessEnd "
     },
     MemberAccess:function(node) { 
-        seq += "MemberAccessBegin "
-        
+        seq += "MemberAccessBegin "   
     },
     "MemberAccess:exit":function(node) {
         seq += "MemberName#" + node['memberName']+" "
@@ -351,12 +349,6 @@ function parseCodeToSeq(textcode){
     "AssemblyCase:exit":function(node){
         seq += "AssemblyCaseEnd "
     },
-    AssemblyFunctionReturns:function(node) {
-        seq += "AssemblyFunctionReturnsBegin "
-    },
-    "AssemblyFunctionReturns:exit":function(node) {
-        seq += "AssemblyFunctionReturnsEnd "
-    },
     AssemblyFor:function(node) {
         seq += "AssemblyForBegin "
     },
@@ -374,94 +366,21 @@ function parseCodeToSeq(textcode){
         console.log(node)
         seq += "AssemblyLiteral#"+node['name']+" "
     },
+    AssemblyFunctionReturns:function(node) {
+        console.log(node)
+        seq += "AssemblyFunctionReturnsBegin "
+    },
+    "AssemblyFunctionReturns:exit":function(node) {
+        seq += "AssemblyFunctionReturnsEnd "
+    },
+    SubAssembly:function(node) {
+        console.log(node)
+    },
+    AssemblyItem:function(node){
+        console.log(node)
+    }
   }
   )
 
-  returnValue = {"seq":seq,"addition_loc":addition_locs}
-  return returnValue 
+  return seq 
 }
-
-assemblyfunc = `contract c1 {
-    function at(address _addr) {
-        assembly  {
-            function power(base, exponent) -> result {
-                switch exponent
-                case 0 { result := 1 }
-                case 1 { result := base }
-                default {
-                    result := power(mul(base, base), div(exponent, 2))
-                    switch mod(exponent, 2)
-                        case 1 { result := mul(base, result) }
-                }
-            }
-            let x := 0
-            for { let i := 0 } lt(i, 0x100) { i := add(i, 0x20) } {
-                    x := add(x, mload(i))
-            }
-            // retrieve the size of the code, this needs assembly
-            let size := extcodesize(_addr)
-            =: abcde
-            ab :
-            if slt(x, 0) { x := sub(0, x) }             
-        }
-    }
-}`
-modifiercode = `
-contract c7172{
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-      uint _;
-      require(msg.sender == owner);
-      _;
-    }
-  }`
-functioncode1 = `contract c7053{
-    function Ownable(uint a) public returns (FreshJuiceSize memory size, uint a) {
-        // landsPurchased();
-        // uint x;
-        // Person memory person = Person({age:18,stuID:101,name:"liyuechun"});
-        require(newOwner != address(this),'Something bad happened');
-        // mapping (address => uint32) lands;
-        // abc x;
-        // string data = "test";
-        // owner = msg.sender;
-        // stateVar = new uint[](2);
-        // stateVar[0] = 1;
-        // a>1 ? a=2 : a=1;
-        // return (7, true, 2);
-    }
-}`
-
-functioncode = `contract c7053{
-    function transferOwnership(address newOwner) internal view onlyOwner(5) {
-        uint[] stateVar;
-        uint b = 0x123456789ffaa;
-        b = 6;
-        revert();
-        require(newOwner != address(this));
-        uint d = testd(b);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        for (uint i=0; i<5; i++) {
-                if(i==5){
-                   break;
-                }
-                else{
-                    continue;
-                }
-        }
-        do{
-            newOwner--;
-        } while(newOwner>0);
-      }
-}`
-
-returnValue = parseCodeToSeq(functioncode1)
-seq = returnValue['seq']
-loc = returnValue['addition_loc']
-console.log(seq)
-console.log(loc)
-console.log(seq.split(" ").length)
-console.log(loc.split(" ").length)
