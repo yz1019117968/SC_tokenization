@@ -27,9 +27,6 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     "Block:exit":function(node) {
         seq += "BlockEnd "
     },
-    // FunctionTypeName:function(node){
-    //     console.log(node)
-    // },
 
     // Needn't care returns variables for those only consist type
     FunctionDefinition:function(node) {
@@ -108,12 +105,6 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     "Mapping:exit":function(node){
         seq += "MappingEnd "
       },
-    //   may never seen
-    EnumValue:function(node) {
-        console.log(node)
-        seq += "VariableName#"+node['name']+" "
-        node['visited'] = true
-    },
     ArrayTypeName:function(node) {
         seq += "ArrayTypeBegin "
     },
@@ -177,14 +168,6 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
             seq += "VariableName#"+node['name']+" "
         }
     },
-    // haven't seen
-    IdentifierList:function(node){
-        console.log(node)
-        seq += "IdentifierListBegin "
-    },
-    "IdentifierList:exit":function(node){
-        seq += "IdentifierListEnd "
-    },
     // Notice: functioName may be classified into Identifier/ElementaryTypeName domain in FunctionCall.
     FunctionCall:function(node){
         seq += "FunctionInvocBegin "
@@ -197,11 +180,12 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         else if(node['expression']['type'] == "NewExpression"){
             seq += "FunctionName#new "
         }
-        // variable -> function
-        else if(node['expression']['type'] == "ElementaryTypeNameExpression"){
-            seq += "FunctionName#"+ node['expression']['typeName']['name']+" "
-            node['expression']['typeName']['visited'] = true
-        }
+        // // variable -> function
+        // else if(node['expression']['type'] == "ElementaryTypeNameExpression"){
+        //     seq += "FunctionName#"+ node['expression']['typeName']['name']+" "
+        //     node['expression']["visited"] = true
+        //     node['expression']['typeName']['visited'] = true
+        // }
         // arguments name, if has. If do not have, is [] instead of null!
         if(Object.keys(node['names']).length != 0){
             for(i = 0; i< Object.keys(node['names']).length; i++){
@@ -212,13 +196,13 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     "FunctionCall:exit":function(node){
         seq += "FunctionInvocEnd "
     },
-    // ElementaryTypeNameExpression:function(node){
-    //     seq += "ElementaryTypeNameExpressionBegin "
+    ElementaryTypeNameExpression:function(node){       
+        seq += "ElementaryTypeNameExpressionBegin "
 
-    // },
-    // "ElementaryTypeNameExpression:exit":function(node){
-    //     seq += "ElementaryTypeNameExpressionEnd "
-    // },
+    },
+    "ElementaryTypeNameExpression:exit":function(node){
+        seq += "ElementaryTypeNameExpressionEnd "
+    },
 
 
     // For assign value or self-statemented
@@ -239,14 +223,14 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     },
     // only appear in assembly
     NumberLiteral:function(node) {
-        seq += "NumberLiteral#Number "
+        seq += "NumberLiteral#<NUM> "
     },
     // only appear in assembly
     BooleanLiteral:function(node) {
         seq += "BooleanLiteral#boolean "
     },
     StringLiteral:function(node){
-        seq += "StringLiteral#String "
+        seq += "StringLiteral#<STR> "
     },
     UnaryOperation:function(node){
         seq += "UnaryOperation#"+node['operator']+" "
@@ -274,10 +258,10 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += "MemberAccessEnd "
     },
     HexNumber:function(node) {
-        seq += "NumberLiteral#Number "
+        seq += "NumberLiteral#<NUM> "
     },
     DecimalNumber:function(node) {
-        seq += "NumberLiteral#Number "
+        seq += "NumberLiteral#<NUM> "
     },
     InlineAssemblyStatement:function(node) {
         seq += "InlineAssemblyStatementBegin "
@@ -331,13 +315,12 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += "AssemblyAssignmentEnd "
     },
     AssemblyStackAssignment:function(node) {
-        seq += "AssemblyAssignmentBegin UnaryOperation#=: VariableName#"+node['name']+" AssemblyAssignmentEnd "
+        seq += "AssemblyStackAssignmentBegin  VariableName#"+node['name']+" AssemblyStackAssignmentEnd "
     },
     LabelDefinition:function(node) {
         seq += "LabelName#"+ node['name']+" "
       },
     AssemblySwitch:function(node) {
-        // console.log(node)
         seq += "AssemblySwitchBegin "
     },
     "AssemblySwitch:exit":function(node){
@@ -360,24 +343,6 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     },
     "AssemblyIf:exit":function(node){
         seq += "AssemblyIfEnd "
-    },
-    // haven't seen 
-    AssemblyLiteral:function(node) {
-        console.log(node)
-        seq += "AssemblyLiteral#"+node['name']+" "
-    },
-    AssemblyFunctionReturns:function(node) {
-        console.log(node)
-        seq += "AssemblyFunctionReturnsBegin "
-    },
-    "AssemblyFunctionReturns:exit":function(node) {
-        seq += "AssemblyFunctionReturnsEnd "
-    },
-    SubAssembly:function(node) {
-        console.log(node)
-    },
-    AssemblyItem:function(node){
-        console.log(node)
     }
   }
   )

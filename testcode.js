@@ -14,6 +14,7 @@ exports.assemblyfunc1 = `contract c1 {
 exports.assemblyfunc = `contract c1 {
     function at(address _addr) {
         assembly  {
+            =: abcde
             function power(base, exponent) -> result {
                 switch exponent
                 case 0 { result := 1 }
@@ -32,7 +33,7 @@ exports.assemblyfunc = `contract c1 {
                 }
                 // retrieve the size of the code, this needs assembly
                 let size := extcodesize(_addr)
-                =: abcde
+                
                 ab :
                 if slt(x, 0) { x := sub(0, x) }   
                      
@@ -69,26 +70,39 @@ exports.functioncode1 = `contract c7053{
 }`
 
 exports.functioncode = `contract c7053{
-    function transferOwnership(address newOwner) internal view onlyOwner(5) {
-        proposals[proposal].voteCount += sender.weight;
-        uint[] stateVar;
-        uint b = 0x123456789ffaa;
-        b = 6;
-        revert();
-        require(newOwner != address(this));
-        uint d = testd(b);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        for (uint i=0; i<5; i++) {
-                if(i==5){
-                   break;
-                }
-                else{
-                    continue;
-                }
-        }
-        do{
-            newOwner--;
-        } while(newOwner>0);
-      }
+    //checks that the player is not already in the game
+    modifier notPlayingAlready()
+    {
+          //one not resolved duel per player only
+          uint progress = player_progress[msg.sender];
+          uint position = player_bet_position[msg.sender];
+          if ( progress==3 && position==1 ) throw;
+          if (progress == 2 ) throw; 
+          if (progress ==  1 ) throw; //no selfdueling
+          _;
+    }
+    // function transferOwnership(address newOwner) internal view onlyOwner(5) {
+        // Should always be placed as first modifier!
+        // return (uint256)(a - b);
+        // proposals[proposal].voteCount += sender.weight;
+        // uint[] stateVar;
+        // uint b = 0x123456789ffaa;
+        // b = 6;
+        // revert();
+        // require(newOwner != address(this));
+        // uint d = testd(b);
+        // emit OwnershipTransferred(owner, newOwner);
+        // owner = newOwner;
+        // for (uint i=0; i<5; i++) {
+        //         if(i==5){
+        //            break;
+        //         }
+        //         else{
+        //             continue;
+        //         }
+        // }
+        // do{
+        //     newOwner--;
+        // } while(newOwner>0);
+    //   }
 }`

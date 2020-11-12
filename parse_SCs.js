@@ -1,32 +1,42 @@
 const parser = require('solidity-parser-antlr')
 const fs = require('fs')
-const parseCodeToSeq = require('./visitor').parseCodeToSeq
 
 
-function outputResults(contract_folder,errorDir,parseCodeToSeq){
-    fs.readdir(process.cwd()+"/funcs_comments_v11112020/"+contract_folder+"/", function (err, files) {
-        if (err) {
-          console.log(err);
-          return;
+exports.outputResults = function outputResults(contractsFolder,readDir,seqDir, errorDir,parseCodeToSeq){
+    
+    var readFolderPath = process.cwd()+"/"+readDir+"/"+contractsFolder
+    var writeFolderPath = process.cwd()+"/"+seqDir+"/"+contractsFolder
+    var files = fs.readdirSync(readFolderPath+"/")
+    var count = files.length;
+    for(var filename of files){
+      var data = fs.readFileSync(readFolderPath+"/"+filename,"UTF-8");
+      try {
+          console.log(contractsFolder+"/"+filename)
+          count = count - 1;
+          var seq = parseCodeToSeq(data)
+          if (fs.existsSync(writeFolderPath)) {
+            fs.writeFileSync(writeFolderPath+"/"+filename, seq)
+          }else{
+            fs.mkdirSync(writeFolderPath)
+            fs.writeFileSync(writeFolderPath+"/"+filename, seq)
+          }   
+      } catch (e) {
+          var errorPath = process.cwd()+"/"+errorDir+"/"+contractsFolder
+          if (e instanceof parser.ParserError) {
+            if(fs.existsSync(errorPath)){
+              fs.writeFileSync(errorPath+"/"+filename,e.errors[0]['message']+e.errors[0]['line'])
+              // console.log("Parse Error ",e.errors[0]['message'])
+            }else{
+              fs.mkdirSync(errorPath)
+              fs.writeFileSync(errorPath+"/"+filename,e.errors[0]['message']+e.errors[0]['line'])
+              // console.log("Parse Error ",e.errors[0]['message'])
+            }
+          }
         }
-        var count = files.length;
-        console.log(count)
-        files.forEach(function (filename) {
-          var data = fs.readFileSync(process.cwd()+"/funcs_comments_v11112020/"+contract_folder+"/"+filename,"UTF-8");
-            try {
-                count = count - 1;
-                console.log("The "+count+"th file: "+filename)
-                seq = parseCodeToSeq(data)
-                console.log(seq)
-            } catch (e) {
-                if (e instanceof parser.ParserError) {
-                  fs.writeFileSync(process.cwd()+"/"+errorDir+"/"+filename,e.errors[0]['message']+e.errors[0]['line'])
-                    console.log("Parse Error",e.errors[0]['message'])
-                }
-            }
-            if (count <= 0) {
-              console.log("all files completed!")
-            }
-        });
-      });
+        if (count <= 0) {
+          console.log(contractsFolder+ " completed!")
+        }
+      }
     }
+
+
