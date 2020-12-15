@@ -223,9 +223,9 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     // only appear in assembly
     NumberLiteral:function(node) {
         if(/^0x[a-fA-F0-9]{40}/.exec(node['number'])==null){
-            seq += "( NumberLiteral NUM ) NumberLiteral NUM "
+            seq += "( NumberLiteral $NUM$ ) NumberLiteral $NUM$ "
         }else{
-            seq += "( AddrLiteral ADDR ) AddrLiteral ADDR "
+            seq += "( AddrLiteral $ADDR$ ) AddrLiteral $ADDR$ "
         }
     },
     // only appear in assembly
@@ -233,7 +233,7 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += "( BooleanLiteral " + node['value'] + " ) BooleanLiteral " + node['value'] + " "
     },
     StringLiteral:function(node){
-        seq += "( StringLiteral STR ) StringLiteral STR "
+        seq += "( StringLiteral $STR$ ) StringLiteral $STR$ "
     },
     UnaryOperation:function(node){
         seq += "( UnaryOperation "+node['operator']+" ) UnaryOperation " + node['operator'] + " "
@@ -261,10 +261,10 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += ") MemberAccess "
     },
     HexNumber:function(node) {
-        seq += "( NumberLiteral NUM ) NumberLiteral NUM "
+        seq += "( NumberLiteral $NUM$ ) NumberLiteral $NUM$ "
     },
     DecimalNumber:function(node) {
-        seq += "( NumberLiteral NUM ) NumberLiteral NUM "
+        seq += "( NumberLiteral $NUM$ ) NumberLiteral $NUM$ "
     },
     InlineAssemblyStatement:function(node) {
         seq += "( InlineAssemblyStatement "
