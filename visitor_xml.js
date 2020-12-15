@@ -52,11 +52,11 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
                 }
                 node['returnParameters'][i]['visited'] = true
                 if(node['returnParameters'][i]['typeName']['type'] == "ElementaryTypeName"){
-                    seq += "<SimpleName>"+node['returnParameters'][i]['typeName']['name']+"</SimpleName>"
+                    seq += "<SimpleType><SimpleName>"+node['returnParameters'][i]['typeName']['name']+"</SimpleName></SimpleType>"
                     node['returnParameters'][i]['typeName']['visited'] = true
                 }
                 else if(node['returnParameters'][i]['typeName']['type'] == "UserDefinedTypeName"){
-                    seq += "<SimpleName>"+node['returnParameters'][i]['typeName']['namePath']+"</SimpleName>"
+                    seq += "<SimpleType><SimpleName>"+node['returnParameters'][i]['typeName']['namePath']+"</SimpleName></SimpleType>"
                     node['returnParameters'][i]['typeName']['visited'] = true
                 }
                 
@@ -70,12 +70,12 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     },
     ElementaryTypeName:function(node){
         if(!node["visited"]){
-            seq += "<SimpleName>"+node['name']+"</SimpleName>"
+            seq += "<SimpleType><SimpleName>"+node['name']+"</SimpleName></SimpleType>"
         }
     },
     UserDefinedTypeName:function(node){
         if(!node["visited"]){
-            seq += "<SimpleName>"+node['namePath']+"</SimpleName>"
+            seq += "<SimpleType><SimpleName>"+node['namePath']+"</SimpleName></SimpleType>"
         }
     },
     VariableDeclaration:function(node){
@@ -105,10 +105,10 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += "</Mapping>"
     },
     ArrayTypeName:function(node) {
-        seq += "<ArrayTypeName>"
+        seq += "<Array>"
     },
     "ArrayTypeName:exit":function(node){
-        seq += "</ArrayTypeName>"
+        seq += "</Array>"
     },
     ExpressionStatement:function(node) {
         seq += "<ExpressionStatement>"
@@ -177,7 +177,7 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         }
         // new
         else if(node['expression']['type'] == "NewExpression"){
-            seq += "<SimpleName>new</SimpleName> "
+            seq += "<SimpleName>new</SimpleName>"
         }
         // // variable -> function
         // else if(node['expression']['type'] == "ElementaryTypeNameExpression"){
@@ -195,12 +195,12 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     "FunctionCall:exit":function(node){
         seq += "</FunctionCall>"
     },
-    ElementaryTypeNameExpression:function(node){       
-        seq += "<ElementaryTypeNameExpression>"
+    ElementaryTypeNameExpression:function(node){      
+        seq += "<SimpleTypeExpression>"
 
     },
     "ElementaryTypeNameExpression:exit":function(node){
-        seq += "</ElementaryTypeNameExpression>"
+        seq += "</SimpleTypeExpression>"
     },
 
 
@@ -222,7 +222,11 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     },
     // only appear in assembly
     NumberLiteral:function(node) {
-        seq += "<NumberLiteral>NUM</NumberLiteral>"
+        if(/^0x[a-fA-F0-9]{40}/.exec(node['number'])==null){
+            seq += "<NumberLiteral>NUM</NumberLiteral>"
+        }else{
+            seq += "<AddrLiteral>ADDR</AddrLiteral>"
+        }
     },
     // only appear in assembly
     BooleanLiteral:function(node) {
@@ -317,7 +321,7 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += "<AssemblyStackAssignment><SimpleName>"+node['name']+"</SimpleName></AssemblyStackAssignment>"
     },
     LabelDefinition:function(node) {
-        seq += "<SimpleName>"+ node['name']+"</SimpleName>"
+        seq += "<LabelDefination><SimpleName>"+ node['name']+"</SimpleName></LabelDefination>"
     },
     AssemblySwitch:function(node) {
         seq += "<AssemblySwitch>"

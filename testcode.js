@@ -4,7 +4,6 @@
 exports.assemblyfunc1 = `contract c1 { 
     function addAssembly(uint x, uint y) public pure returns (uint) {
         assembly {
-            let c, d := obj
 
             let y := add(x, 3)
             let z := add(keccak256(0x0, 0x20), div(slength, 32))
@@ -13,8 +12,9 @@ exports.assemblyfunc1 = `contract c1 {
 }}`
 exports.assemblyfunc = `contract c1 {
     function at(address _addr) {
-        boolean x = true;
+        address x = 0xdCad3a6d3569DF655070DEd06cb7A1b2Ccd1D3AF;
         assembly  {
+            mstore(0x80, add(mload(0x80), 3))
             =: abcde
             function power(base, exponent) -> result {
                 switch exponent
@@ -53,26 +53,26 @@ contract c7172{
     }
   }`
 exports.functioncode1 = `contract c7053{
-    function Ownable(uint a) public returns (unit) {
-        // landsPurchased();
-        // uint x;
-        // require(newOwner != address(this),'Something bad happened');
-        // mapping (address => uint32) lands;
-        // abc x;
-        // string data = "test";
-        // owner = msg.sender;
-        // stateVar = new uint[](2);
-        // stateVar[0] = 1;
-        // a>1 ? a=2 : a=1;
-        // return (7, true, 2);
+    function Ownable(uint a) public payable returns (unit a) {
+        landsPurchased();
+        uint x;
+        require(newOwner != address(this),'Something bad happened');
+        mapping (address => uint32) lands;
+        abc x;
+        string data = "test";
+        owner = msg.sender;
+        stateVar = new uint[](2);
+        stateVar[0] = 1;
+        a>1 ? a=2 : a=1;
+        return (7, true, 2);
         if (a > 2) {
             a = 2;
-            // if(i==5){
-            //    break;
-            // }
-            // else{
-            //     continue;
-            // }
+            if(i==5){
+               break;
+            }
+            else{
+                continue;
+            }
     }
     }
 }`
@@ -84,7 +84,7 @@ exports.functioncode = `contract c7053{
         //   //one not resolved duel per player only
         //   uint progress = player_progress[msg.sender];
         //   uint position = player_bet_position[msg.sender];
-        //   if ( progress==3 && position==1 ) throw;
+        //   
         //   if (progress == 2 ) throw; 
         //   if (progress ==  1 ) throw; //no selfdueling
         //   _;
@@ -101,13 +101,9 @@ exports.functioncode = `contract c7053{
         uint d = testd(b);
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
+        
         for (uint i=0; i<5; i++) {
-                if(i==5){
-                   break;
-                }
-                else{
-                    continue;
-                }
+            if ( progress==3 && position==1 ) throw;
         }
         do{
             newOwner--;

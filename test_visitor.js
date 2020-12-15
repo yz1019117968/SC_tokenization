@@ -3,6 +3,6 @@
 */
 const parseCodeToSeq = require('./visitor_xml').parseCodeToSeq
 const tests = require('./testcode')
-seq = parseCodeToSeq(tests.assemblyfunc)
+seq = parseCodeToSeq(tests.functioncode1)
 console.log(seq)
 console.log("Total Length: ", seq.split(" ").length)
