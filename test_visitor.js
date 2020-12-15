@@ -1,8 +1,8 @@
 /*
     test the parseCodeToSeq function by some instances.
 */
-const parseCodeToSeq = require('./visitor_xml').parseCodeToSeq
+const parseCodeToSeq = require('./visitor_sbt').parseCodeToSeq
 const tests = require('./testcode')
-seq = parseCodeToSeq(tests.functioncode1)
+seq = parseCodeToSeq(tests.functioncode)
 console.log(seq)
 console.log("Total Length: ", seq.split(" ").length)

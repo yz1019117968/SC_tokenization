@@ -52,11 +52,11 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
                 }
                 node['returnParameters'][i]['visited'] = true
                 if(node['returnParameters'][i]['typeName']['type'] == "ElementaryTypeName"){
-                    seq += "( SimpleName#"+node['returnParameters'][i]['typeName']['name']+" ) SimpleName#" + node['returnParameters'][i]['typeName']['name'] + " "
+                    seq += "( SimpleType ( SimpleName#"+node['returnParameters'][i]['typeName']['name']+" ) SimpleName#" + node['returnParameters'][i]['typeName']['name'] + " ) SimpleType "
                     node['returnParameters'][i]['typeName']['visited'] = true
                 }
                 else if(node['returnParameters'][i]['typeName']['type'] == "UserDefinedTypeName"){
-                    seq += "( SimpleName#"+node['returnParameters'][i]['typeName']['namePath']+" ) SimpleName#" + node['returnParameters'][i]['typeName']['namePath'] + " "
+                    seq += "( SimpleType ( SimpleName#"+node['returnParameters'][i]['typeName']['namePath']+" ) SimpleName#" + node['returnParameters'][i]['typeName']['namePath'] + " ) SimpleType "
                     node['returnParameters'][i]['typeName']['visited'] = true
                 }
                 
@@ -70,12 +70,12 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     },
     ElementaryTypeName:function(node){
         if(!node["visited"]){
-            seq += "( SimpleName#"+node['name']+" ) SimpleName#" + node['name'] + " "
+            seq += "( SimpleType ( SimpleName#"+node['name']+" ) SimpleName#" + node['name'] + " ) SimpleType "
         }
     },
     UserDefinedTypeName:function(node){
         if(!node["visited"]){
-            seq += "( SimpleName#"+node['namePath']+" ) SimpleName#" + node['namePath'] + " "
+            seq += "( SimpleType ( SimpleName#"+node['namePath']+" ) SimpleName#" + node['namePath'] + " ) SimpleType "
         }
     },
     VariableDeclaration:function(node){
@@ -105,10 +105,10 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += ") Mapping "
     },
     ArrayTypeName:function(node) {
-        seq += "( ArrayTypeName "
+        seq += "( Array "
     },
     "ArrayTypeName:exit":function(node){
-        seq += ") ArrayTypeName "
+        seq += ") Array "
     },
     ExpressionStatement:function(node) {
         seq += "( ExpressionStatement "
@@ -196,11 +196,11 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += ") FunctionCall "
     },
     ElementaryTypeNameExpression:function(node){       
-        seq += "( ElementaryTypeNameExpression "
+        seq += "( SimpleTypeExpression "
 
     },
     "ElementaryTypeNameExpression:exit":function(node){
-        seq += ") ElementaryTypeNameExpression "
+        seq += ") SimpleTypeExpression "
     },
 
 
@@ -222,14 +222,18 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     },
     // only appear in assembly
     NumberLiteral:function(node) {
-        seq += "( NumberLiteral <NUM> ) NumberLiteral <NUM> "
+        if(/^0x[a-fA-F0-9]{40}/.exec(node['number'])==null){
+            seq += "( NumberLiteral NUM ) NumberLiteral NUM "
+        }else{
+            seq += "( AddrLiteral ADDR ) AddrLiteral ADDR "
+        }
     },
     // only appear in assembly
     BooleanLiteral:function(node) {
         seq += "( BooleanLiteral " + node['value'] + " ) BooleanLiteral " + node['value'] + " "
     },
     StringLiteral:function(node){
-        seq += "( StringLiteral <STR> ) StringLiteral <STR> "
+        seq += "( StringLiteral STR ) StringLiteral STR "
     },
     UnaryOperation:function(node){
         seq += "( UnaryOperation "+node['operator']+" ) UnaryOperation " + node['operator'] + " "
@@ -257,10 +261,10 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
         seq += ") MemberAccess "
     },
     HexNumber:function(node) {
-        seq += "( NumberLiteral <NUM> ) NumberLiteral <NUM> "
+        seq += "( NumberLiteral NUM ) NumberLiteral NUM "
     },
     DecimalNumber:function(node) {
-        seq += "( NumberLiteral <NUM> ) NumberLiteral <NUM> "
+        seq += "( NumberLiteral NUM ) NumberLiteral NUM "
     },
     InlineAssemblyStatement:function(node) {
         seq += "( InlineAssemblyStatement "
