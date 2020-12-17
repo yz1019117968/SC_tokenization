@@ -208,7 +208,7 @@ exports.parseCodeToSeq = function parseCodeToSeq(textcode){
     VariableDeclarationStatement:function(node){
         seq += "( VariableDeclarationStatement "
         if(node['initialValue']){
-            seq += "( BinaryOperation = ) BinaryOperation = "
+            seq += "( BinaryOperation ) BinaryOperation "
         }
     },
     "VariableDeclarationStatement:exit":function(node){
