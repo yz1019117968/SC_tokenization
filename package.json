@@ -1,16 +1,11 @@
 {
-  "name": "SC_tokenization",
-  "version": "1.0.0",
-  "description": "",
-  "main": "visitor.js",
-  "dependencies": {
-    "solidity-parser-antlr": "^0.4.11"
-  },
-  "devDependencies": {},
+  "license": "MIT",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prettier": "prettier"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "dependencies": {},
+  "devDependencies": {
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.2"
+  }
 }
