@@ -1,4 +1,4 @@
-### Smart Contract Tokenization Tool-kit
+### Smart Contract Processing Tool-kit
 #### General Introduction for the Whole Framework
 - visitor.js: A kind of structural-based traversal method similar to [SBT](https://ieeexplore.ieee.org/abstract/document/8973050). 
 - visitor_sbt.js: A kind of SBT method adapted to smart contracts.
