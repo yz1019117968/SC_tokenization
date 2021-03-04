@@ -1,8 +1,8 @@
 /*
     test the parseCodeToSeq function by some instances.
 */
-const parseCodeToSeq = require('./visitor_sbt_struct').parseCodeToSeq
+const parseCodeToSeq = require('./visitor_sbt').parseCodeToSeq
 const tests = require('./testcode')
-seq = parseCodeToSeq(tests.assemblyfunc1)
+seq = parseCodeToSeq(tests.functioncode2)
 console.log(seq)
 console.log("Total Length: ", seq.split(" ").length)

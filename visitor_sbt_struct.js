@@ -3,6 +3,7 @@ const parser = require('solidity-parser-antlr')
 /*
     Parse smart contracts code to SBT sequences with only "type",
 */
+
 exports.parseCodeToSeq = function parseCodeToSeq(textcode){
   var ast = parser.parse(textcode)
   var seq = ""

@@ -110,3 +110,17 @@ exports.functioncode = `contract c7053{
         } while(newOwner>0);
       }
 }`
+
+exports.functioncode2 = `
+contract yx {
+function withdrawOnce (int amount) public {
+    if (amount >1 ether || transferred [msg.sender]) {
+      revert();
+    } 
+else {
+ msg.sender.transfer(uint(amount));
+ transferred[msg.sender]=true;
+    }
+    log("execution time", now);
+}
+}`
