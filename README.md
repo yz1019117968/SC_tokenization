@@ -9,4 +9,16 @@
 - test_visitor.js: If you want to run a sample code by above visitor_* method, use this function.
 - parse_SCs.js: Run above visitor_* methods in batch.
 - main.js: Main function.
+#### Welcome to Cite!  
+- The tool-kit is provided and applied in the [paper](https://arxiv.org/abs/2103.07164), if you find it useful and would like to cite it, the following would be appropriate:
+```
+@misc{yang2021multimodal,
+      title={A Multi-Modal Transformer-based Code Summarization Approach for Smart Contracts}, 
+      author={Zhen Yang and Jacky Keung and Xiao Yu and Xiaodong Gu and Zhengyuan Wei and Xiaoxue Ma and Miao Zhang},
+      year={2021},
+      eprint={2103.07164},
+      archivePrefix={arXiv},
+      primaryClass={cs.SE}
+}
+```
   
