@@ -1,4 +1,10 @@
 ### Smart Contract Processing Tool-kit
+#### Dependencies
+```cmd
+npm == 8.5.0
+node.js == v16.14.2
+solidity-parser-antlr == ^0.4.11
+```
 #### General Introduction for the Whole Framework
 - visitor.js: A kind of structural-based traversal method similar to [SBT](https://ieeexplore.ieee.org/abstract/document/8973050). 
 - visitor_sbt.js: A kind of SBT method adapted to smart contracts.
@@ -21,4 +27,3 @@
       primaryClass={cs.SE}
 }
 ```
-  
